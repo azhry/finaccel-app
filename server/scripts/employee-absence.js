@@ -42,7 +42,7 @@ module.exports = async function employeesStream(cb, processCb = () => {}) {
                 }
 
                 numEmployeesProcessed++;
-                if (numEmployeesProcessed % 100) {
+                if (numEmployeesProcessed % 100 == 0) {
                     processCb(numEmployeesProcessed);
                 }
                 callback();

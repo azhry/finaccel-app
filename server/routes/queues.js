@@ -26,7 +26,49 @@ router.get('/enqueue', (req, res) => {
 });
 
 router.get('/process', (req, res) => {
-
+    queue.process('employee-absences', (job, done) => {
+        req.app.io.emit('queue', job.data.title);
+        generateEmployeeAbsences(err => {
+            if (err) {
+                console.log(err);
+                done(err);
+            }
+            else {
+                done();
+                queue.process('employee-leaves', (job, done) => {
+                    req.app.io.emit('queue', job.data.title);
+                    generateEmployeeLeaves(err => {
+                        if (err) {
+                            console.log(err);
+                            done(err);
+                        }
+                        else {
+                            done();
+                            queue.process('employee-salary', (job, done) => {
+                                req.app.io.emit('queue', job.data.title);
+                                updateEmployeeSalaries(err => {
+                                    if (err) {
+                                        console.log(err);
+                                        done(err);
+                                    }
+                                    else {
+                                        done();
+                                        return 'success';
+                                    }
+                                }, numEmployeesProcessed => {
+                                    req.app.io.emit('progress', numEmployeesProcessed);
+                                });
+                            });
+                        }
+                    }, numEmployeesProcessed => {
+                        req.app.io.emit('progress', numEmployeesProcessed);
+                    })
+                });
+            }
+        }, numEmployeesProcessed => {
+            req.app.io.emit('progress', numEmployeesProcessed);
+        });
+    });
     res.send('Processing queues');
 });
 
